@@ -36,5 +36,4 @@ Instalar e verificar documentação sobre como implementá-la
 
 Demais dependências já resolvidas na instalação do python 3.5 ou superior
 
-Vídeo do funcionamento do algoritmo: https://www.youtube.com/watch?v=fMn1_6qhEn0&t=9s
 
