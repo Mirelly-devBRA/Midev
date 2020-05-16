@@ -109,6 +109,107 @@ def atualizaTaxaFeromonio(grafo, lista_caminho, coeficiente_evaporacao, lista_ve
     return distanciaTotal
 
 
+#----------------------------------------------------- NOVO CODIGO DE ACO
+
+def probabilidaArestaN(grafo, origem, alpha, beta):
+
+    probabilidade_aresta = {}
+    inversa_distancia = inversaDistancia(grafo, origem)
+    list_vizinhos = grafo.getVizinho(origem)
+
+    somatorio_TxyNxy = 0
+    for i in range(len(list_vizinhos)):
+        somatorio_TxyNxy += pow(inversa_distancia[(origem, list_vizinhos[i])],beta) * pow(grafo.getFeromonioAresta(origem, list_vizinhos[i]),alpha)
+
+    for i in range(len(list_vizinhos)):
+        probabilidade_aresta[(origem, list_vizinhos[i])] = pow((inversa_distancia[(origem, list_vizinhos[i])],beta) * pow(grafo.getFeromonioAresta(origem, list_vizinhos[i])),alpha) / somatorio_TxyNxy
+    return probabilidade_aresta
+
+def proximoVerticeN(grafo, origem,alpha,beta):
+
+    dict_probabilidade_aresta = probabilidaArestaN(grafo, origem,alpha,beta)
+
+    vizinhos_origem = grafo.getVizinho(origem)
+    list_probabilidade = []
+    checar_destino = []
+    for j in range(len(vizinhos_origem)):
+        list_probabilidade.append(dict_probabilidade_aresta[(origem, vizinhos_origem[j])])
+    checar_destino.append(numpy.random.choice(a=vizinhos_origem, p=list_probabilidade))
+    return checar_destino[0]
+
+def caminhoT(grafo, origem, lista_caminho, e,alpha,beta):
+
+    lista_caminho.append(origem)
+    for i in range(e-1):
+        origem = proximoVerticeN(grafo, origem)
+        lista_caminho.append(origem)
+
+def atualizaTaxaFeromonioN(grafo, lista_caminho, coeficiente_evaporacao, lista_vertice, Q, b, melhor, Lmelhor):
+
+    atualizarTaxaEvaporacao(grafo, lista_vertice, coeficiente_evaporacao)
+
+    #CALCULA A DISTANCIA TOTAL PERCORRIDA POR CADA FORMIGA
+    distanciaTotal = []
+    for i in range(len(lista_caminho)):
+        caminhoFormiga = lista_caminho[i]
+        somatorio = 0
+        for j in range(len(caminhoFormiga)-1):
+            somatorio += grafo.getCustoAresta(caminhoFormiga[j],caminhoFormiga[j+1])
+        distanciaTotal.append(somatorio)
+
+    # ATUALIZA O FEROMÔNIO NA ROTA DEIXADO POR CADA FORMIGA
+    for i in range(len(lista_caminho)):
+        caminhoFormiga = lista_caminho[i]
+        for j in range(len(caminhoFormiga) - 1):
+            somatorio = Q / distanciaTotal[i] + grafo.getFeromonioAresta(caminhoFormiga[j], caminhoFormiga[j + 1])
+            grafo.setFeromonioAresta(caminhoFormiga[j], caminhoFormiga[j + 1], somatorio)
+            grafo.setFeromonioAresta(caminhoFormiga[j + 1], caminhoFormiga[j], somatorio) #grafo não é bidirecional
+
+    caminhoFormiga = melhor
+    for j in range(len(caminhoFormiga) - 1):
+            somatorio = b*Q / Lmelhor + grafo.getFeromonioAresta(caminhoFormiga[j], caminhoFormiga[j + 1])
+            grafo.setFeromonioAresta(caminhoFormiga[j], caminhoFormiga[j + 1], somatorio)
+            grafo.setFeromonioAresta(caminhoFormiga[j + 1], caminhoFormiga[j], somatorio) #grafo não é bidirecional
+
+    return distanciaTotal
+
+def ASTSP(grafo,lista_vertice,origem, destino, max_it,alpha,beta,p,N,e,Q,b):
+    origem_formiga = []
+    for i in range(N)
+        origem_formiga.append(numpy.random.choice(a=lista_vertice))
+
+    melhor = []
+    caminho(grafo,origem, destino, melhor)
+    Lmelhor = 0
+    for j in range(len(melhor)-1):
+            Lmelhor += grafo.getCustoAresta(melhor[j],melhor[j+1])
+
+    for t in range(max_it):
+        T = []
+        for i in range(N):
+            lista_caminho = []
+            caminhoT(grafo, origem_formiga[i],lista_caminho,e,alpha,beta)
+            origem_formiga[i] = lista_caminho[-1]
+            T.append(lista_caminho)
+        L = []
+        for i in range(len(T)):
+            caminhoFormiga = T[i]
+            somatorio = 0
+            for j in range(len(caminhoFormiga)-1):
+                somatorio += grafo.getCustoAresta(caminhoFormiga[j],caminhoFormiga[j+1])
+            L.append(somatorio)
+        for i in range(len(L)):
+            if L[i] < Lmelhor:
+                melhor = T[i]
+                Lmelhor = L[i]
+                
+        atualizaTaxaFeromonioN(grafo, T, p, lista_vertice, Q, b, melhor, Lmelhor)
+
+
+    return melhor,Lmelhor
+
+#-----------------------------------------------------
+
 def sistemaColoniaFormiga(grafo, mapa, origem, destino, lista_vertice, coeficiente_evaporacao, iteracao, vel_iteracao, formiga):
 
     rota_total = [('AP', 'PA'), ('AC', 'RO'), ('RO', 'AM'), ('AM', 'AC'), ('RR', 'AM'), ('RR', 'PA'),
